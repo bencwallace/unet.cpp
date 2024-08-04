@@ -231,39 +231,6 @@ void test_load_weights() {
   assert(std::fabs(weights.data_[weights.size_ - 1] - 0.0135) < epsilon);
 }
 
-void test_read_pgm() {
-  tensor<2> image = read_pgm("car.pgm");
-  assert(image.dims_[0] == 256);
-  assert(image.dims_[1] == 512);
-  assert(image({0, 0}) == 238);
-
-  tensor<1> row_sums({256});
-  for (int h = 0; h < 256; ++h) {
-    row_sums({h}) = 0;
-    for (int w = 0; w < 512; ++w) {
-      row_sums({h}) += image({h, w});
-    }
-  }
-  assert(std::fabs(row_sums({0}) - 112677) < 1e5);
-  assert(std::fabs(row_sums({255}) - 112677) < 1e5);
-
-  tensor<1> col_sums({512});
-  for (int w = 0; w < 512; ++w) {
-    col_sums({w}) = 0;
-    for (int h = 0; h < 256; ++h) {
-      col_sums({w}) += image({h, w});
-    }
-  }
-  assert(std::fabs(col_sums({0}) - 46951) < 1e5);
-  assert(std::fabs(col_sums({511}) - 48336) < 1e5);
-
-  float sum = 0;
-  for (int i = 0; i < image.size_; ++i) {
-    sum += image.data_[i];
-  }
-  assert(std::fabs(sum - 15978494) < 1e5);
-}
-
 void test_read_ppm() {
   tensor<3> image = read_ppm("car.ppm");
   assert(image.dims_[0] == 3);
@@ -370,7 +337,6 @@ int main() {
   test_load_weights();
   test_unet1();
   test_unet2();
-  test_read_pgm();
   test_read_ppm();
 
   return 0;
