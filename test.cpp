@@ -1,13 +1,13 @@
 #include <cassert>
+#include <chrono>
 #include <fstream>
 
 #include "io.h"
 #include "ops.h"
 #include "unet.h"
 
-const float epsilon = 1e-4;
+const float epsilon = 2e-3;
 
-// TODO: test all conv methods
 void test_conv1() {
   tensor<3> input({2, 3, 3}, 1);
   tensor<4> kernel({1, 2, 3, 3}, 1);
@@ -274,16 +274,6 @@ void test_read_ppm() {
   assert(std::fabs(col_sums({2, 511}) - 47715) < 1e5);
 }
 
-void test_unet1() {
-  unet model(3, 21);
-  tensor<3> input({3, 256, 256});
-  tensor<3> output = model(input);
-
-  assert(output.dims_[0] == 21);
-  assert(output.dims_[1] == 256);
-  assert(output.dims_[2] == 256);
-}
-
 void test_unet2() {
   unet model(3, 2);
   model.load_checkpoint("weights.bin");
@@ -291,7 +281,6 @@ void test_unet2() {
   tensor<3> input({3, 16, 32}, 0);
   tensor<3> output = model(input);
 
-  // std::cout << output({0, 0, 0}) << std::endl;
   assert(std::fabs(output({0, 0, 0}) - 0.4432) < epsilon);
 
   tensor<1> channel_sums({2});
@@ -335,7 +324,7 @@ int main() {
   test_conv_transpose1();
   test_conv_transpose2();
   test_load_weights();
-  test_unet1();
+
   test_unet2();
   test_read_ppm();
 

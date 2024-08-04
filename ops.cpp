@@ -3,19 +3,35 @@
 
 #include "ops.h"
 
+void matmul(std::unique_ptr<float[]> &out, const std::unique_ptr<float[]> &left, const std::unique_ptr<float[]> &right,
+            int rows, int shared, int cols) {
+#pragma omp parallel for
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      out[i * cols + j] = 0;
+    }
+    for (int k = 0; k < shared; ++k) {
+      float lhs = left[i * shared + k];
+      for (int j = 0; j < cols; ++j) {
+        out[i * cols + j] += lhs * right[k * cols + j];
+      }
+    }
+  }
+}
+
 tensor<2> im2col(const tensor<3> &im, int kernel_height, int kernel_width, int padding) {
-  int col_height = im.dims_[1] + 2 * padding - kernel_height + 1;
-  int col_width = im.dims_[2] + 2 * padding - kernel_width + 1;
-  tensor<2> col({kernel_width * kernel_height * im.dims_[0], col_height * col_width});
+  int out_height = im.dims_[1] + 2 * padding - kernel_height + 1;
+  int out_width = im.dims_[2] + 2 * padding - kernel_width + 1;
+  tensor<2> col({kernel_width * kernel_height * im.dims_[0], out_height * out_width});
 #pragma omp parallel for
   for (int d = 0; d < im.dims_[0]; ++d) {
     for (int i = 0; i < kernel_height; ++i) {
       for (int j = 0; j < kernel_width; ++j) {
-        for (int h = 0; h < col_height; ++h) {
-          for (int w = 0; w < col_width; ++w) {
+        for (int h = 0; h < out_height; ++h) {
+          for (int w = 0; w < out_width; ++w) {
             int h_in = h - padding + i;
             int w_in = w - padding + j;
-            auto &val = col({d * kernel_height * kernel_width + i * kernel_width + j, h * col_width + w});
+            auto &val = col({d * kernel_height * kernel_width + i * kernel_width + j, h * out_width + w});
             if (h_in >= 0 && h_in < im.dims_[1] && w_in >= 0 && w_in < im.dims_[2]) {
               val = im({d, h_in, w_in});
             } else {
@@ -35,6 +51,7 @@ tensor<3> col2im(const tensor<2> &col, int num_filters, int kernel_height, int k
   int num_window_rows = im_height / kernel_height;
   int num_window_cols = im_width / kernel_width;
 
+#pragma omp parallel for
   for (int d = 0; d < im.dims_[0]; ++d) {
     for (int i = 0; i < kernel_height; ++i) {
       for (int j = 0; j < kernel_width; ++j) {
@@ -53,33 +70,22 @@ tensor<3> col2im(const tensor<2> &col, int num_filters, int kernel_height, int k
 }
 
 tensor<3> conv(const tensor<3> &input, const tensor<4> &kernel, const tensor<1> &bias, int padding) {
+  tensor<2> col = im2col(input, kernel.dims_[2], kernel.dims_[3], padding);
+
   int output_height = input.dims_[1] + 2 * padding - kernel.dims_[2] + 1;
   int output_width = input.dims_[2] + 2 * padding - kernel.dims_[3] + 1;
   tensor<3> output({kernel.dims_[0], output_height, output_width});
+  matmul(output.data_, kernel.data_, col.data_, kernel.dims_[0], kernel.dims_[1] * kernel.dims_[2] * kernel.dims_[3],
+         output_height * output_width);
 
-  tensor<2> col = im2col(input, kernel.dims_[2], kernel.dims_[3], padding);
-
-#pragma omp parallel for
   for (int f = 0; f < kernel.dims_[0]; ++f) {
     for (int h = 0; h < output_height; ++h) {
       for (int w = 0; w < output_width; ++w) {
-        output({f, h, w}) = bias({f});
-      }
-    }
-    for (int d = 0; d < kernel.dims_[1]; ++d) {
-      for (int i = 0; i < kernel.dims_[2]; ++i) {
-        for (int j = 0; j < kernel.dims_[3]; ++j) {
-          float k = kernel({f, d, i, j});
-          for (int h = 0; h < output_height; ++h) {
-            for (int w = 0; w < output_width; ++w) {
-              output({f, h, w}) +=
-                  col({d * kernel.dims_[2] * kernel.dims_[3] + i * kernel.dims_[3] + j, h * output_width + w}) * k;
-            }
-          }
-        }
+        output({f, h, w}) += bias({f});
       }
     }
   }
+
   return output;
 }
 
