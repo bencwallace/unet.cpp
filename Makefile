@@ -18,6 +18,8 @@ CXXFLAGS := $(RELEASE_CXXFLAGS)
 # CXX := $(DEBUG_CXX)
 # CXXFLAGS := $(DEBUG_CXXFLAGS)
 
+all: test unet
+
 test: test.o io.o ops.o unet.o Makefile
 	$(CXX) $(CXXFLAGS) -o test test.o io.o ops.o unet.o
 
@@ -40,4 +42,4 @@ unet.o: unet.h unet.cpp Makefile
 	$(CXX) $(CXXFLAGS) -c unet.cpp
 
 clean:
-	rm -f test test.o main.o io.o ops.o unet.o
+	rm -f main test test.o main.o io.o ops.o unet.o
