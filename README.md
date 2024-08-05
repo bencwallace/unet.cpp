@@ -28,7 +28,7 @@ make unet
 ```
 
 Input must be an image in [PPM](https://netpbm.sourceforge.net/doc/ppm.html) format with spatial dimensions powers of 2.
-Moreover, the current implementation of the PPM reader is limited; however, it has worked successfully on files created
+Note that the current implementation of the PPM reader is limited; however, it has worked successfully on files created
 with [ImageMagick](https://imagemagick.org/).
 
 The output will be saved in [PGM](https://netpbm.sourceforge.net/doc/pgm.html) format.
@@ -38,5 +38,5 @@ The output will be saved in [PGM](https://netpbm.sourceforge.net/doc/pgm.html) f
 A sample valid PPM file is included as `car.ppm` (created with ImageMagick from `car.png` via `convert car.png car.ppm`).
 
 ```
-./unet car.ppm
+./unet car.ppm mask.pgm
 ```
