@@ -24,14 +24,14 @@ make unet
 3. Run U-Net
 
 ```
-./unet [path]
+./unet [input] [output]
 ```
 
 Input must be an image in [PPM](https://netpbm.sourceforge.net/doc/ppm.html) format with spatial dimensions powers of 2.
 Moreover, the current implementation of the PPM reader is limited; however, it has worked successfully on files created
 with [ImageMagick](https://imagemagick.org/).
 
-The output `mask.pgm` is in [PGM](https://netpbm.sourceforge.net/doc/pgm.html) format.
+The output will be saved in [PGM](https://netpbm.sourceforge.net/doc/pgm.html) format.
 
 **Example**
 
