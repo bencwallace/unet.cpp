@@ -40,3 +40,8 @@ A sample valid PPM file is included as `car.ppm` (created with ImageMagick from 
 ```
 ./unet car.ppm mask.pgm
 ```
+
+## Future work
+
+`unet.cpp` is slow! The matrix multiply underlying the convolutions (via im2col) could stand to be optimized, but more
+likely a better convolution algorithm will be needed (FFT or Winograd).
